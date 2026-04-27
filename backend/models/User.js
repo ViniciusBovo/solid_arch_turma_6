@@ -21,6 +21,10 @@ const User = mongoose.model(
         type: String,
         required: true,
       },
+      confirmpassword: {
+        type: String,
+        required: true,
+      },
     },
     {
       timestamp: true,

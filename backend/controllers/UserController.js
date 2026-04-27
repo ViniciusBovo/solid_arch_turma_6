@@ -4,7 +4,7 @@ const createUserToken = require("../helpers/create-user-token")
 
 module.exports = class UserController {
   static async register(req, res) {
-    const { name, email, phone, password, confirmapassword } = req.body;
+    const { name, email, phone, password, confirmpassword } = req.body;
 
     if (!name) {
       res.status(422).json({ message: "Nome é obrigatório" });
@@ -22,11 +22,11 @@ module.exports = class UserController {
       res.status(422).json({ message: "password é obrigatório" });
       return;
     }
-    if (!confirmapassword) {
+    if (!confirmpassword) {
       res.status(422).json({ message: "Confirmação de senha é obrigatório" });
       return;
     }
-    if (password !== confirmapassword) {
+    if (password !== confirmpassword) {
       res.status(422).json({ message: "As senhas não coincidem" });
       return;
     }
@@ -55,5 +55,33 @@ module.exports = class UserController {
     } catch (error) {
       res.status(503).json({ message: error })
     }
+  }
+
+  static async login(req, res) {
+    const { email, password } = req.body;
+
+    if (!email) {
+      res.status(422).json({ message: "Email é obrigatório" });
+      return;
+    }
+    if (!password) {
+      res.status(422).json({ message: "password é obrigatório" });
+      return;
+    }
+
+    const userExists = await User.findOne({ email: email });
+
+    if(!userExists) {
+      res.status(401).json({ message: "Não autorizado, sem registro." });
+      return;
+    }
+
+    const checkPassword = await bcrypt.compare(password, userExists.password)
+
+    if(!checkPassword) {
+      res.status(401).json({ message: "Não autorizado, sem registro." });
+      return;
+    }
+    await createUserToken(userExists, req, res)
   }
 };
