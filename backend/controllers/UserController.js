@@ -1,6 +1,8 @@
 const User = require("../models/User");
-const bcrypt = require("bcrypt")
-const createUserToken = require("../helpers/create-user-token")
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const createUserToken = require("../helpers/create-user-token");
+const getToken = require("../helpers/get-tokens");
 
 module.exports = class UserController {
   static async register(req, res) {
@@ -50,10 +52,10 @@ module.exports = class UserController {
     });
 
     try {
-      const newUser = await user.save()
-      await createUserToken(newUser, req, res)
+      const newUser = await user.save();
+      await createUserToken(newUser, req, res);
     } catch (error) {
-      res.status(503).json({ message: error })
+      res.status(503).json({ message: error });
     }
   }
 
@@ -71,17 +73,51 @@ module.exports = class UserController {
 
     const userExists = await User.findOne({ email: email });
 
-    if(!userExists) {
+    if (!userExists) {
       res.status(401).json({ message: "Não autorizado, sem registro." });
       return;
     }
 
-    const checkPassword = await bcrypt.compare(password, userExists.password)
+    const checkPassword = await bcrypt.compare(password, userExists.password);
 
-    if(!checkPassword) {
+    if (!checkPassword) {
       res.status(401).json({ message: "Não autorizado, sem registro." });
       return;
     }
-    await createUserToken(userExists, req, res)
+    await createUserToken(userExists, req, res);
   }
-};
+
+  static async checkUser(req, res) {
+    let currentUser;
+
+    console.log(req.headers.authorization);
+
+    if (req.headers.authorization) {
+      const token = getToken(req);
+      const decodedToken = jwt.verify(token, "fatec-turma6-a2026");
+
+      currentUser = await User.findById(decodedToken.id);
+      currentUser.password = undefined;
+    } else {
+      currentUser = null;
+    }
+
+    res.status(200).send(currentUser);
+  }
+
+  static async getUserById(req, res) {
+    const id = req.params.id
+
+    const user = await User.findById(id)
+
+    if (!user) {
+      res.status(404).json({ message: "Usuário não encontrado" })
+      return
+    }
+    res.status(200).json(user)
+  }
+
+  static async editUser(req, res) {
+    res.status(200).json({ message: "Usuário atualizado com sucesso" })
+  }
+}
