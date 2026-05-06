@@ -123,13 +123,13 @@ module.exports = class UserController {
   }
 
   static async editUser(req, res) {
-    const id = req.params.id
+    const id = req.params.id;
 
-    const token = getToken(req)
-    const user =  await getUserByToken(token)
+    const token = getToken(req);
+    const user = await getUserByToken(token);
 
-    const {name, email, phone, password, confirmpassword} = req.body
-    let image = ""
+    const { name, email, phone, password, confirmpassword } = req.body;
+    let image = "";
 
     if (!name) {
       res.status(422).json({ message: "Nome é obrigatório" });
@@ -156,7 +156,7 @@ module.exports = class UserController {
       return;
     }
 
-    const userExists = await User.findOne({ email: email})
+    const userExists = await User.findOne({ email: email });
 
     if (userExists.email === email && userExists) {
       res
