@@ -13,33 +13,38 @@ module.exports = class UserController {
       res.status(422).json({ message: "Nome é obrigatório" });
       return;
     }
+
     if (!email) {
       res.status(422).json({ message: "Email é obrigatório" });
       return;
     }
+
     if (!phone) {
-      res.status(422).json({ message: "Phone é obrigatório" });
+      res.status(422).json({ message: "Telefone é obrigatório" });
       return;
     }
 
     if (!password) {
-      res.status(422).json({ message: "password é obrigatório" });
+      res.status(422).json({ message: "Senha é obrigatória" });
       return;
     }
+
     if (!confirmpassword) {
-      res.status(422).json({ message: "Confirmação de senha é obrigatório" });
+      res.status(422).json({ message: "Confirmação de senha é obrigatória" });
       return;
     }
+
     if (password !== confirmpassword) {
       res.status(422).json({ message: "As senhas não coincidem" });
       return;
     }
+
     const userExists = await User.findOne({ email: email });
 
     if (userExists) {
       res
         .status(422)
-        .json({ message: "O Usuário já existe em nossos registros." });
+        .json({ message: "O usuário já existe em nossos registros." });
       return;
     }
 
@@ -47,9 +52,9 @@ module.exports = class UserController {
     const passwordHash = await bcrypt.hash(password, salt);
 
     const user = new User({
-      name: name,
-      email: email,
-      phone: phone,
+      name,
+      email,
+      phone,
       password: passwordHash,
     });
 
@@ -69,23 +74,27 @@ module.exports = class UserController {
       return;
     }
     if (!password) {
-      res.status(422).json({ message: "password é obrigatório" });
+      res.status(422).json({ message: "Senha é obrigatória" });
       return;
     }
-
     const userExists = await User.findOne({ email: email });
 
     if (!userExists) {
-      res.status(401).json({ message: "Não autorizado, sem registro." });
+      res.status(401).json({
+        message: "Não autorizado, sem registro",
+      });
       return;
     }
 
     const checkPassword = await bcrypt.compare(password, userExists.password);
 
     if (!checkPassword) {
-      res.status(401).json({ message: "Não autorizado, sem registro." });
+      res.status(401).json({
+        message: "Não autorizado, sem registro",
+      });
       return;
     }
+
     await createUserToken(userExists, req, res);
   }
 
@@ -96,9 +105,9 @@ module.exports = class UserController {
 
     if (req.headers.authorization) {
       const token = getToken(req);
-      const decodedToken = jwt.verify(token, "fatec-turma6-a2026");
+      const decoded = jwt.verify(token, "fatec-turma6-a2026");
 
-      currentUser = await User.findById(decodedToken.id);
+      currentUser = await User.findById(decoded.id);
       currentUser.password = undefined;
     } else {
       currentUser = null;
@@ -123,8 +132,6 @@ module.exports = class UserController {
   }
 
   static async editUser(req, res) {
-    const id = req.params.id;
-
     const token = getToken(req);
     const user = await getUserByToken(token);
 
@@ -135,37 +142,54 @@ module.exports = class UserController {
       res.status(422).json({ message: "Nome é obrigatório" });
       return;
     }
+    user.name = name;
+
     if (!email) {
       res.status(422).json({ message: "Email é obrigatório" });
       return;
     }
+
     if (!phone) {
-      res.status(422).json({ message: "Phone é obrigatório" });
+      res.status(422).json({ message: "Telefone é obrigatório" });
       return;
     }
-    if (!password) {
-      res.status(422).json({ message: "password é obrigatório" });
-      return;
-    }
-    if (!confirmpassword) {
-      res.status(422).json({ message: "Confirmação de senha é obrigatório" });
-      return;
-    }
-    if (password !== confirmpassword) {
-      res.status(422).json({ message: "As senhas não coincidem" });
-      return;
-    }
+    user.phone = phone
 
     const userExists = await User.findOne({ email: email });
 
-    if (userExists.email === email && userExists) {
-      res
-        .status(422)
-        .json({ message: "Existe um problema de chave e-mail com a edição." });
+    if (user.email !== email && userExists) {
+      res.status(422).json({
+        message: "Existe um problema de chave e-mail com a edição."});
       return;
     }
 
-    const salt = await bcrypt.genSalt(12);
-    const passwordHash = await bcrypt.hash(password, salt);
+    user.email = email;
+
+    if (password !== confirmpassword) {
+      res.status(422).json({ message: "As senhas não coincidem" });
+      return;
+    } else if (password === confirmpassword && password != null){
+      const salt = await bcrypt.genSalt(12)
+      user.passwordHash = await bcrypt.hash(password, salt)
+
+      user.password = passwordHash
+    }
+
+    try{
+      const updatedUser = await User.findOneAndUpdate(
+        { _id: user._id },
+        { $set: user },
+        { new: true }
+      )
+
+      res.status(202).json({
+        message: "Dados aceitos e processados",
+        user: updatedUser
+      })
+
+    }catch(err){
+      res.status(500).json({ message: err})
+      return
+    }
   }
 };
