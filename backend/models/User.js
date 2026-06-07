@@ -13,19 +13,19 @@ const User = mongoose.model(
         type: String,
         required: true,
       },
-      phone: {
-        type: String,
-        required: true,
-      },
       password: {
         type: String,
         required: true,
       },
+      image: {
+        type: String,
+      },
+      phone: {
+        type: String,
+      },
     },
-    {
-      timestamp: true,
-    }
-  )
+    { timestamps: true },
+  ),
 );
 
 module.exports = User;

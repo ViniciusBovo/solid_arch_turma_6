@@ -1,7 +1,9 @@
-const getTokens = (req) => {
-    const authHeader = req.headers.authorization
-    const token = authHeader.split(' ')[1]
-    return token
-}
+// get token from headers
+const getToken = (req) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
 
-module.exports = getTokens;
+  return token;
+};
+
+module.exports = getToken;
